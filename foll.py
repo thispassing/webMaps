@@ -1,7 +1,9 @@
 import folium
-import pandas
+import pandas as pd
+import matplotlib.pyplot as plt
 
-data = pandas.read_csv("Volcanoes.txt")
+
+data = pd.read_csv("Volcanoes.txt")
 lat = list(data["LAT"])
 lon = list(data["LON"])
 elev = list(data["ELEV"])
@@ -26,22 +28,26 @@ def radius_producer(RAD):
     else:
         return '9'
 
-map = folium.Map(location=[41.28,-110.54], zoom_start=6, tiles="OpenStreetMap")
+map = folium.Map(location=[41.28,-110.54], zoom_start=6, tiles="Stamen Toner")
 
-fg = folium.FeatureGroup(name="My Map")
-
-# for lt, ln, el in zip(lat, lon, elev):
-#   fg.add_child(folium.Marker(location=[lt, ln], popup=str(el)+" m", icon=folium.Icon(color=color_producer(el))))
+fgv = folium.FeatureGroup(name="Volcanoes")
 
 for lt, ln, el in zip(lat, lon, elev):
-    fg.add_child(folium.CircleMarker(location=[lt, ln], popup=str(el)+" m", radius=radius_producer(el), 
+    fgv.add_child(folium.CircleMarker(location=[lt, ln], popup=str(el)+" m", radius=radius_producer(el), 
     fill=True, fill_color=color_producer(el), fill_opacity=0.7, color='grey'))
 
-# fg.add_child(folium.Marker(location=[39.16,-76.73], popup="Here", icon=folium.Icon(color='black')))
-# fg.add_child(folium.Marker(location=[39.40,-76.56], popup="Towson", icon=folium.Icon(color='blue')))
-# fg.add_child(folium.Marker(location=[39.215,-76.86], popup="Columbia", icon=folium.Icon(color='black')))
+fgp = folium.FeatureGroup(name="Population")
+
+fgp.add_child(folium.GeoJson(data=open("world.json", 'r', encoding="utf-8-sig").read(), 
+style_function=lambda x: {'fillColor':'green' if x['properties']['POP2005'] < 10000000 
+else 'orange' if 10000000 <= x['properties']['POP2005'] < 100000000
+else 'red' if 100000000 <= x['properties']['POP2005'] < 300000000 else 'blue'}))
+
+# fg.add_child(plt.text( -170, -58,'Where people talk about #Surf\n\nData collected on twitter by @R_Graph_Gallery during 300 days\nPlot realized with Python and the Basemap library',
+# ha='left', va='bottom', size=9, color='#555555'))
 
 
-map.add_child(fg)
-
+map.add_child(fgv)
+map.add_child(fgp)
+map.add_child(folium.LayerControl())
 map.save("Map2.html")
